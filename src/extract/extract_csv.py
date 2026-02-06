@@ -33,8 +33,17 @@ def extract_csv_from_minio(bucket_name: str = None, object_name: str = "csv/telc
     response.close()
     response.release_conn()
 
-    # Parser le CSV
-    df = pd.read_csv(io.BytesIO(csv_data))
+    # Parser le CSV (détection automatique de l'encodage)
+    raw = io.BytesIO(csv_data)
+    try:
+        df = pd.read_csv(raw, encoding="utf-8")
+    except UnicodeDecodeError:
+        raw.seek(0)
+        try:
+            df = pd.read_csv(raw, encoding="utf-16")
+        except Exception:
+            raw.seek(0)
+            df = pd.read_csv(raw, encoding="latin-1")
 
     print(f"  ✅ {len(df)} lignes extraites depuis s3://{bucket_name}/{object_name}")
     print(f"  📊 Colonnes: {list(df.columns)}")

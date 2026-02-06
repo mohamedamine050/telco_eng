@@ -37,8 +37,15 @@ def extract_json_from_minio(bucket_name: str = None, object_name: str = "json/sy
     response.close()
     response.release_conn()
 
-    # Parser le JSON
-    data = json.loads(json_data.decode("utf-8"))
+    # Parser le JSON (détection automatique de l'encodage)
+    for encoding in ("utf-8", "utf-16", "latin-1"):
+        try:
+            data = json.loads(json_data.decode(encoding))
+            break
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+    else:
+        raise ValueError("Impossible de décoder le fichier JSON")
 
     # Extraire les résultats
     results = data.get("results", [])
