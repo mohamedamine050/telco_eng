@@ -35,7 +35,7 @@ MinIO S3 (Bronze)  ──→  Extract  ──→  Transform  ──→  Load  �
 | **Apache Airflow** | Orchestration ELT | `8080` |
 | **MinIO** | Data Lake (S3) | `9002` (API) / `9003` (Console) |
 | **PostgreSQL 15** | Data Warehouse | `5433` |
-| **pgAdmin 4** | Administration PostgreSQL | `5050` |
+| **pgAdmin 4** | Administration BDD | `5050` |
 | **Grafana** | Visualisation | `3000` |
 
 ## 📁 Structure du Projet
@@ -78,8 +78,8 @@ docker-compose up -d
 |---------|-----|-------------|
 | **Airflow** | http://localhost:8080 | `admin` / `admin` |
 | **MinIO** | http://localhost:9003 | `minioadmin` / `minioadmin` |
+| **pgAdmin** | http://localhost:5050 | `admin@telco.com` / `admin` |
 | **Grafana** | http://localhost:3000 | `admin` / `admin` |
-| **pgAdmin** | http://localhost:5050 | mode Desktop (pas de login) |
 
 ### 3. Lancer le pipeline
 1. Ouvrir **Airflow** → http://localhost:8080
