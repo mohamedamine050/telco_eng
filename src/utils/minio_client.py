@@ -26,7 +26,7 @@ def load_config() -> dict:
     """Retourne la configuration MinIO depuis les variables d'environnement."""
     return {
         "minio": {
-            "endpoint": os.getenv("MINIO_ENDPOINT", "localhost:9002"),
+            "endpoint": os.getenv("MINIO_ENDPOINT", "localhost:9000"),
             "access_key": os.getenv("MINIO_ACCESS_KEY", "minioadmin"),
             "secret_key": os.getenv("MINIO_SECRET_KEY", "minioadmin"),
             "secure": False,
