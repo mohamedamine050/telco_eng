@@ -34,6 +34,7 @@ MinIO S3 (Bronze)  ──→  Extract  ──→  Transform  ──→  Load  �
 |---------|------|------|
 | **Apache Airflow** | Orchestration ELT | `8080` |
 | **MinIO** | Data Lake (S3) | `9000` (API) / `9001` (Console) |
+| **MinIO AIStor** | AI Data Store | `9004` (API) / `9005` (Console) |
 | **PostgreSQL 15** | Data Warehouse | `5433` |
 | **pgAdmin 4** | Administration BDD | `5050` |
 | **Grafana** | Visualisation | `3000` |
@@ -78,6 +79,7 @@ docker-compose up -d
 |---------|-----|-------------|
 | **Airflow** | http://localhost:8080 | `admin` / `admin` |
 | **MinIO** | http://localhost:9001 | `minioadmin` / `minioadmin` |
+| **MinIO AIStor** | http://localhost:9005 | `minioadmin` / `minioadmin` |
 | **pgAdmin** | http://localhost:5050 | `admin@telco.com` / `admin` |
 | **Grafana** | http://localhost:3000 | `admin` / `admin` |
 
