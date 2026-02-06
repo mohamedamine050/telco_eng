@@ -1,0 +1,190 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "📊 Overall Churn Rate",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT churn_rate AS \"Churn Rate %\" FROM warehouse.churn_insights WHERE insight_name = 'overall_summary' AND data_source = 'csv' LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 30 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "👥 Total Customers",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT total_customers AS \"Total Customers\" FROM warehouse.churn_insights WHERE insight_name = 'overall_summary' AND data_source = 'csv' LIMIT 1;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "🚪 Churned Customers",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT churned_customers AS \"Churned\" FROM warehouse.churn_insights WHERE insight_name = 'overall_summary' AND data_source = 'csv' LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "💰 Avg Monthly Charges",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT avg_monthly_charges AS \"Avg Monthly $\" FROM warehouse.churn_insights WHERE insight_name = 'overall_summary' AND data_source = 'csv' LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD" }
+      }
+    },
+    {
+      "title": "📈 Churn Rate by Contract Type",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Contract\", churn_rate AS \"Churn Rate %\", total_customers AS \"Customers\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_contract' AND data_source = 'csv' ORDER BY churn_rate DESC;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "🌐 Churn Rate by Internet Service",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Internet\", churn_rate AS \"Churn Rate %\", total_customers AS \"Customers\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_internet' AND data_source = 'csv' ORDER BY churn_rate DESC;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "💳 Churn Rate by Payment Method",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Payment\", churn_rate AS \"Churn Rate %\", total_customers AS \"Customers\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_payment' AND data_source = 'csv' ORDER BY churn_rate DESC;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "📅 Churn Rate by Tenure Group",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Tenure\", churn_rate AS \"Churn Rate %\", total_customers AS \"Customers\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_tenure_group' AND data_source = 'csv' ORDER BY category;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "👤 Churn Rate by Gender",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 21 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Gender\", churned_customers AS \"Churned\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_gender' AND data_source = 'csv';",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "👴 Churn Rate: Senior vs Non-Senior",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 21 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Type\", churn_rate AS \"Churn Rate %\", total_customers AS \"Customers\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_senior' AND data_source = 'csv';",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "💲 Churn Rate by Charges Group",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 21 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT category AS \"Charges\", churn_rate AS \"Churn Rate %\", total_customers AS \"Customers\" FROM warehouse.churn_insights WHERE insight_name = 'churn_by_charges_group' AND data_source = 'csv' ORDER BY category;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "title": "📋 All Insights - Detail Table",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 29 },
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "telco-postgres-ds" },
+      "targets": [
+        {
+          "rawSql": "SELECT insight_name, dimension, category, total_customers, churned_customers, churn_rate, avg_monthly_charges, avg_tenure, avg_total_charges, data_source FROM warehouse.churn_insights ORDER BY insight_name, category;",
+          "format": "table"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["telco", "churn", "data-engineering"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Telco Customer Churn - Insights Dashboard",
+  "uid": "telco-churn-insights",
+  "version": 1
+}

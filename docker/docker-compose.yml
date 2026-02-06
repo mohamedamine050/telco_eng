@@ -1,17 +1,178 @@
-version: "3.8"
-
 services:
+  # ============================================
+  # DATA LAKE - MinIO (S3-compatible storage)
+  # ============================================
   minio:
-    image: quay.io/minio/aistor/minio:latest
+    image: minio/minio:latest
     container_name: minio
     ports:
-      - "9000:9000"   # API
-      - "9001:9001"   # WebUI
+      - "9002:9000"   # API S3
+      - "9003:9001"   # WebUI Console
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
-      - ../data/raw:/mnt/data
-      - ../data/json:/mnt/json
-      - ../data/certs:/etc/minio/certs
-    command: minio server /mnt/data --console-address ":9001"
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - telco_network
+
+  # ============================================
+  # DATA WAREHOUSE - PostgreSQL
+  # ============================================
+  postgres:
+    image: postgres:15
+    container_name: postgres_dw
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: telco_admin
+      POSTGRES_PASSWORD: telco_pass
+      POSTGRES_DB: telco_warehouse
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U telco_admin -d telco_warehouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - telco_network
+
+  # ============================================
+  # ORCHESTRATION - Apache Airflow
+  # ============================================
+  airflow-init:
+    image: apache/airflow:2.9.3-python3.11
+    container_name: airflow_init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        pip install --quiet pandas pyarrow minio psycopg2-binary &&
+        airflow db migrate &&
+        airflow users create --username admin --firstname Admin --lastname Telco --role Admin --email admin@telco.com --password admin
+    environment: &airflow-env
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://telco_admin:telco_pass@postgres_dw:5432/telco_warehouse
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      PG_HOST: postgres_dw
+      PG_PORT: "5432"
+      PG_DATABASE: telco_warehouse
+      PG_USER: telco_admin
+      PG_PASSWORD: telco_pass
+    volumes: &airflow-volumes
+      - ../dags:/opt/airflow/dags
+      - ../src:/opt/airflow/src
+      - airflow_logs:/opt/airflow/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - telco_network
+
+  airflow-webserver:
+    image: apache/airflow:2.9.3-python3.11
+    container_name: airflow_webserver
+    command: >
+      bash -c "
+        pip install --quiet pandas pyarrow minio psycopg2-binary &&
+        airflow webserver --port 8080
+      "
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *airflow-env
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    volumes: *airflow-volumes
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - telco_network
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.3-python3.11
+    container_name: airflow_scheduler
+    command: >
+      bash -c "
+        pip install --quiet pandas pyarrow minio psycopg2-binary &&
+        airflow scheduler
+      "
+    environment: *airflow-env
+    volumes: *airflow-volumes
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - telco_network
+
+  # ============================================
+  # VISUALIZATION - Grafana
+  # ============================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - telco_network
+
+  # ============================================
+  # ADMINISTRATION - pgAdmin 4
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@telco.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - telco_network
+
+volumes:
+  minio_data:
+  postgres_data:
+  grafana_data:
+  airflow_logs:
+  pgadmin_data:
+
+networks:
+  telco_network:
+    driver: bridge

@@ -1,0 +1,33 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (keep structure, ignore large files)
+data/
+
+# Docker volumes
+docker/minio_data/
+docker/postgres_data/
+
+# Airflow
+airflow_logs/
+*.pyc
+
+# Logs
+*.log
